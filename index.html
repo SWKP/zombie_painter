@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Zombie Painter</title>
+        <script src='js/phaser.min.js'></script>
+        <script>
+            var game = new Phaser.Game(1500, 1000, Phaser.CANVAS, null, { preload: preload, create: create, update: update });
+            
+			var zombie, car, cursors, txtScore, score, blood, txtSpeed;
+            var zombies = [];
+            var momentum = 4;
+            var zombieCount = 400;
+            
+            function preload() {
+				//load in assets needed
+				game.load.image('zombie', 'img/zombie.gif');
+                game.load.image('car', 'img/car.png');
+				game.load.image('bg', 'img/bg3.png');
+                game.load.image('blood', 'img/bloodsplatter.png');
+			}
+            function create() {
+            //setup game
+                //world bounds
+                game.physics.setBoundsToWorld();
+                
+                //add bg
+                game.add.sprite(0,0,'bg');
+                
+                //add car and the ability to turn
+                car = game.add.sprite(400, 300, 'car');
+                car.anchor.setTo(.5,.5);
+                car.scale.setTo(0.5, 0.5);
+                car.enableBody = true;
+                car.physicsBodyType = Phaser.Physics.ARCADE;
+                car.checkWorldBounds = true;
+                car.events.onOutOfBounds.add(carOut, this);
+                game.physics.enable(car, Phaser.Physics.ARCADE);
+                
+                //add zombie
+                for(var i=0; i < zombieCount; i++){
+                    zombie = game.add.sprite( Math.random() * game.width,
+                    Math.random() * game.height, 'zombie');
+                    zombie.scale.setTo(0.15, 0.15);
+                    zombie.angle = game.rnd.angle();
+                    game.physics.enable(zombie, Phaser.Physics.ARCADE);
+                    zombies.push(zombie);
+                    
+                    
+                }
+                //score text
+                score = 0;
+                var style = { font: '30px Arial', fill: '#FFF', stroke: 'black', strokeThickness: '6'};
+                txtScore = game.add.text(20, 50, "Walkers killed: " + score.toString(), style);
+                //speed text
+                txtSpeed = game.add.text(20, 90, "Your Speed: " + momentum.toString() + " mph", style);
+                             
+                //arrow key setup
+                cursors = game.input.keyboard.createCursorKeys();
+            }
+            function update() {
+            //console.log(car.position.x);
+            //run game loop code
+                if(cursors.left.isDown) {
+                    car.x -= momentum;
+                    car.angle = 0;
+                }
+                if(cursors.right.isDown) {
+                    car.x += momentum;
+                    car.angle = 180;
+                }
+                if(cursors.up.isDown) {
+                    car.y -= momentum;
+                    car.angle = 90;
+                }
+                if(cursors.down.isDown) {
+                   car.y += momentum;
+                   car.angle = 270;
+                }
+                if(cursors.left.isDown && cursors.down.isDown) {
+                    car.angle = 315;
+                }
+                if(cursors.up.isDown && cursors.left.isDown) {
+                    car.angle = 45;
+                }
+                if(cursors.down.isDown && cursors.right.isDown) {
+                    car.angle = 225;
+                }
+                if(cursors.up.isDown && cursors.right.isDown) {
+                    car.angle = 135;
+                }
+                
+                               
+                game.physics.arcade.overlap(car, zombies, zombieHitHandler);
+                car.bringToTop();
+                txtScore.bringToTop();
+                txtSpeed.bringToTop();
+                
+                //animate the zombies!
+                zombies.forEach(function(zombie){
+                    zombie.bringToTop();
+                   zombie.y += Math.floor( Math.random() * 4 - 2); 
+                   zombie.x += Math.floor( Math.random() * 4 - 2);
+                    
+                                    //horizontal check
+                if(zombie.position.x <= 0){
+                   zombie.position.x = game.world.width;
+                   } else if(zombie.position.x >= game.world.width) {
+                    zombie.position.x = 0;
+                   }
+                //vertical check
+                if(zombie.position.y <= 0){
+                   zombie.position.y = game.world.height;
+                   } else if(zombie.position.y >= game.world.height) {
+                    zombie.position.y = 0;
+                   }
+                });
+                
+            }
+            //what to do when player collides with zombie
+            function zombieHitHandler(carObject, zombieObject) {
+                zombieObject.x = Math.random() * game.width;
+                zombieObject.y = Math.random() * game.height;
+                
+                //add blood when car hits zombie
+                blood = game.add.sprite(
+                    car.position.x , 
+                    car.position.y , 'blood');
+                blood.alpha = 0.5;
+                blood.anchor.setTo(.5,.5);
+                blood.scale.setTo(0.15, 0.15);
+                blood.angle = game.rnd.angle();
+                
+                //naturally more blood = increased speed
+                momentum += 0.05;
+                
+                score ++;
+                txtScore.setText( "Walkers killed: " + score.toString());
+                txtSpeed.setText( "Your Speed: " + (momentum.toFixed(1) * 5).toString() + " mph");
+                
+            }
+            
+            //loop when the car goes out of bounds
+            function carOut(car){
+                console.log("Car out of bounds!");
+                
+                //horizontal check
+                if(car.position.x <= 0){
+                   car.position.x = game.world.width;
+                   } else if(car.position.x >= game.world.width) {
+                    car.position.x = 0;
+                   }
+                //vertical check
+                if(car.position.y <= 0){
+                   car.position.y = game.world.height;
+                   } else if(car.position.y >= game.world.height) {
+                    car.position.y = 0;
+                   }
+            }
+            
+            
+        </script>
+    <head>
+    <body>
+    </body>
+</html>
